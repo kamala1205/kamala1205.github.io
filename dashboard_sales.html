@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Performance Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c10;--bg2:#0d1117;--card:#111720;--accent:#00d4ff;--accent2:#00ff9d;--red:#ff4d6d;--yellow:#ffd166;--text:#e8edf2;--muted:#6b7a8d;--border:rgba(0,212,255,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:1.2rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+.back-btn{font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:2px;color:var(--muted);text-decoration:none;}
+.back-btn:hover{color:var(--accent);}
+.header-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--accent);}
+.header-sub{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:2px;text-align:right;}
+main{padding:2rem;}
+.filters{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;align-items:center;background:var(--card);padding:1rem 1.5rem;border-radius:10px;border:1px solid var(--border);}
+.filter-label{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:2px;}
+select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:0.5rem 1rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:0.7rem;cursor:pointer;outline:none;transition:border-color 0.2s;}
+select:hover,select:focus{border-color:var(--accent);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2rem;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.blue::before{background:var(--accent);} .kpi.green::before{background:var(--accent2);}
+.kpi.red::before{background:var(--red);}     .kpi.yellow::before{background:var(--yellow);}
+.kpi-label{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:0.5rem;}
+.kpi-value{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;line-height:1;margin-bottom:0.3rem;}
+.kpi.blue .kpi-value{color:var(--accent);} .kpi.green .kpi-value{color:var(--accent2);}
+.kpi.red .kpi-value{color:var(--red);}     .kpi.yellow .kpi-value{color:var(--yellow);}
+.kpi-sub{font-size:0.78rem;color:var(--muted);}
+.up{color:var(--accent2);} .dn{color:var(--red);}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:1rem;}
+.chart-wrap{position:relative;height:260px;}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;padding-top:0.5rem;}
+.tr-row{margin-bottom:0.4rem;}
+.tr-head{display:flex;justify-content:space-between;margin-bottom:4px;}
+.tr-lbl{font-size:0.82rem;color:var(--muted);}
+.tr-val{font-family:'Space Mono',monospace;font-size:0.72rem;}
+.pb{background:rgba(255,255,255,0.07);border-radius:4px;height:5px;}
+.pv{height:5px;border-radius:4px;transition:width 0.4s;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0.8rem 1rem;border-bottom:1px solid var(--border);text-align:left;}
+td{padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;}
+tr:hover td{background:rgba(0,212,255,0.04);}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:'Space Mono',monospace;font-size:0.6rem;}
+.badge.top{background:rgba(0,255,157,0.15);color:var(--accent2);}
+.badge.mid{background:rgba(255,209,102,0.15);color:var(--yellow);}
+.badge.low{background:rgba(255,77,109,0.15);color:var(--red);}
+</style>
+</head>
+<body>
+<header>
+  <a href="https://kamala1205.github.io" class="back-btn">← Back to Portfolio</a>
+  <div class="header-title">📊 SALES PERFORMANCE</div>
+  <div class="header-sub">KAMALAKANTA BEHERA · DATA ANALYST</div>
+</header>
+<main>
+  <div class="filters">
+    <span class="filter-label">Filter by:</span>
+    <select id="f_region"><option value="all">All Regions</option><option value="north">North India</option><option value="south">South India</option><option value="east">East India</option><option value="west">West India</option></select>
+    <select id="f_cat"><option value="all">All Categories</option><option value="electronics">Electronics</option><option value="clothing">Clothing</option><option value="furniture">Furniture</option><option value="food">Food &amp; Beverage</option></select>
+    <select id="f_year"><option value="2024">FY 2024</option><option value="2023">FY 2023</option><option value="2022">FY 2022</option></select>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="v1">₹2.4Cr</div><div class="kpi-sub" id="s1"><span class="up">▲ 18.4%</span> vs last year</div></div>
+    <div class="kpi green"><div class="kpi-label">Units Sold</div><div class="kpi-value" id="v2">14,820</div><div class="kpi-sub" id="s2"><span class="up">▲ 12.1%</span> vs last year</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Avg Order Value</div><div class="kpi-value" id="v3">₹1,620</div><div class="kpi-sub" id="s3"><span class="up">▲ 5.6%</span> vs last year</div></div>
+    <div class="kpi red"><div class="kpi-label">Return Rate</div><div class="kpi-value" id="v4">4.2%</div><div class="kpi-sub" id="s4"><span class="up">▼ 0.8%</span> improved</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card full"><div class="chart-title">MONTHLY REVENUE TREND (₹ LAKHS)</div><div class="chart-wrap"><canvas id="cTrend"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">SALES BY CATEGORY</div><div class="chart-wrap"><canvas id="cCat"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">REGION-WISE REVENUE (₹L)</div><div class="chart-wrap"><canvas id="cRegion"></canvas></div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">QUARTERLY TARGET TRACKER</div>
+      <div class="tg" id="targets"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">TOP PRODUCTS</div>
+      <table><thead><tr><th>Product</th><th>Category</th><th>Units</th><th>Revenue</th><th>Rank</th></tr></thead>
+      <tbody id="tbl"></tbody></table>
+    </div>
+  </div>
+</main>
+
+<script>
+// ─── FULL DATASET ─────────────────────────────────────────────────────────────
+const DATA = {
+  kpi: {
+    'all-2024':         {rev:'₹2.4Cr', units:'14,820', aov:'₹1,620', ret:'4.2%', rg:18.4, ug:12.1, ag:5.6,  dr:-0.8},
+    'north-2024':       {rev:'₹72L',   units:'4,210',  aov:'₹1,710', ret:'3.8%', rg:22.1, ug:14.3, ag:7.2,  dr:-1.2},
+    'south-2024':       {rev:'₹65L',   units:'3,840',  aov:'₹1,692', ret:'4.5%', rg:16.8, ug:11.2, ag:5.1,  dr:-0.4},
+    'east-2024':        {rev:'₹48L',   units:'2,980',  aov:'₹1,610', ret:'5.1%', rg:12.4, ug:9.8,  ag:3.2,  dr:0.6},
+    'west-2024':        {rev:'₹55L',   units:'3,790',  aov:'₹1,451', ret:'3.9%', rg:20.2, ug:13.5, ag:6.4,  dr:-1.0},
+    'electronics-2024': {rev:'₹91L',   units:'3,200',  aov:'₹2,850', ret:'3.1%', rg:24.2, ug:18.5, ag:8.1,  dr:-1.4},
+    'clothing-2024':    {rev:'₹62L',   units:'5,850',  aov:'₹1,066', ret:'6.2%', rg:15.3, ug:10.2, ag:4.6,  dr:0.8},
+    'furniture-2024':   {rev:'₹43L',   units:'1,920',  aov:'₹2,250', ret:'2.8%', rg:11.8, ug:8.5,  ag:3.0,  dr:-0.6},
+    'food-2024':        {rev:'₹29L',   units:'3,850',  aov:'₹748',   ret:'5.5%', rg:8.1,  ug:6.2,  ag:2.1,  dr:1.2},
+  },
+  yearMul: {'2024':1,'2023':0.845,'2022':0.714},
+
+  trend: {
+    'all':         {'2024':[18,16,24,20,22,24,19,21,20,22,28,30],'2023':[14,13,18,16,17,20,15,17,16,18,22,25],'2022':[11,10,14,12,13,16,12,14,13,15,18,21]},
+    'north':       {'2024':[5,4,7,6,7,8,6,7,6,7,9,10],'2023':[4,3,5,5,5,6,5,6,5,5,7,8],'2022':[3,2,4,4,4,5,4,5,4,4,6,7]},
+    'south':       {'2024':[4,4,6,5,6,7,5,6,6,6,8,8],'2023':[3,3,5,4,5,6,4,5,5,5,7,7],'2022':[2,2,4,3,4,5,3,4,4,4,6,6]},
+    'east':        {'2024':[3,3,5,4,4,5,4,4,4,5,6,7],'2023':[2,2,4,3,3,4,3,3,3,4,5,6],'2022':[2,2,3,2,3,3,2,3,3,3,4,5]},
+    'west':        {'2024':[4,4,6,5,5,6,5,5,5,5,7,8],'2023':[3,3,5,4,4,5,4,4,4,4,6,7],'2022':[2,2,4,3,3,4,3,3,3,3,5,6]},
+    'electronics': {'2024':[8,7,10,9,9,11,10,11,9,10,13,14],'2023':[6,5,8,7,7,9,8,9,7,8,10,11],'2022':[5,4,6,5,5,7,6,7,5,6,8,9]},
+    'clothing':    {'2024':[4,3,6,5,5,6,4,4,5,5,7,8],'2023':[3,2,5,4,4,5,3,3,4,4,6,7],'2022':[2,2,4,3,3,4,2,3,3,3,5,6]},
+    'furniture':   {'2024':[3,3,5,4,4,5,3,3,4,4,6,7],'2023':[2,2,4,3,3,4,2,2,3,3,5,6],'2022':[2,1,3,2,2,3,2,2,2,2,4,5]},
+    'food':        {'2024':[2,2,3,2,3,3,2,3,2,2,3,4],'2023':[2,1,2,2,2,3,2,2,2,2,3,3],'2022':[1,1,2,1,2,2,1,2,1,2,2,3]},
+  },
+
+  cat: {
+    'all':        {l:['Electronics','Clothing','Furniture','Food','Other'],d:[38,26,18,12,6]},
+    'north':      {l:['Electronics','Clothing','Furniture','Food','Other'],d:[42,24,16,12,6]},
+    'south':      {l:['Electronics','Clothing','Furniture','Food','Other'],d:[35,28,20,11,6]},
+    'east':       {l:['Electronics','Clothing','Furniture','Food','Other'],d:[32,30,18,14,6]},
+    'west':       {l:['Electronics','Clothing','Furniture','Food','Other'],d:[40,24,16,12,8]},
+    'electronics':{l:['Laptops','Phones','Tablets','Accessories','Other'],d:[40,30,16,10,4]},
+    'clothing':   {l:['Jackets','Shirts','Shoes','Accessories','Other'],  d:[35,28,20,12,5]},
+    'furniture':  {l:['Chairs','Tables','Sofas','Shelves','Other'],       d:[32,26,22,14,6]},
+    'food':       {l:['Beverages','Snacks','Dairy','Staples','Other'],     d:[30,28,20,16,6]},
+  },
+
+  region: {
+    'all':        {l:['North','South','East','West'],d:[72,65,48,55]},
+    'electronics':{l:['North','South','East','West'],d:[30,28,18,22]},
+    'clothing':   {l:['North','South','East','West'],d:[18,16,14,14]},
+    'furniture':  {l:['North','South','East','West'],d:[12,11,8,10]},
+    'food':       {l:['North','South','East','West'],d:[9,8,7,7]},
+    'north':      {l:['Delhi','UP','Rajasthan','Punjab','Others'],d:[28,18,12,10,4]},
+    'south':      {l:['Bengaluru','Chennai','Hyderabad','Kochi','Others'],d:[24,18,14,8,1]},
+    'east':       {l:['Kolkata','Patna','Bhubaneswar','Guwahati','Others'],d:[20,12,9,7,0]},
+    'west':       {l:['Mumbai','Pune','Ahmedabad','Surat','Others'],d:[24,14,10,6,1]},
+  },
+
+  targets: {
+    'all':        [{q:'Q1',a:58,t:60},{q:'Q2',a:62,t:65},{q:'Q3',a:54,t:70},{q:'Q4',a:66,t:80}],
+    'north':      [{q:'Q1',a:16,t:17},{q:'Q2',a:18,t:18},{q:'Q3',a:16,t:20},{q:'Q4',a:22,t:22}],
+    'south':      [{q:'Q1',a:14,t:15},{q:'Q2',a:16,t:17},{q:'Q3',a:14,t:18},{q:'Q4',a:19,t:20}],
+    'east':       [{q:'Q1',a:10,t:12},{q:'Q2',a:12,t:13},{q:'Q3',a:10,t:14},{q:'Q4',a:14,t:16}],
+    'west':       [{q:'Q1',a:12,t:14},{q:'Q2',a:14,t:15},{q:'Q3',a:12,t:16},{q:'Q4',a:16,t:18}],
+    'electronics':[{q:'Q1',a:22,t:22},{q:'Q2',a:24,t:26},{q:'Q3',a:22,t:28},{q:'Q4',a:26,t:30}],
+    'clothing':   [{q:'Q1',a:14,t:15},{q:'Q2',a:16,t:16},{q:'Q3',a:13,t:18},{q:'Q4',a:18,t:20}],
+    'furniture':  [{q:'Q1',a:10,t:11},{q:'Q2',a:11,t:12},{q:'Q3',a:9,t:13},{q:'Q4',a:12,t:14}],
+    'food':       [{q:'Q1',a:7,t:8},{q:'Q2',a:8,t:8},{q:'Q3',a:7,t:9},{q:'Q4',a:8,t:10}],
+  },
+
+  products: {
+    'all':        [{n:'Laptop Pro X',c:'Electronics',u:'1,240',r:'₹49.6L',k:'top'},{n:'Winter Jacket',c:'Clothing',u:'2,180',r:'₹21.8L',k:'top'},{n:'Office Chair',c:'Furniture',u:'840',r:'₹16.8L',k:'mid'},{n:'Smartphone Y2',c:'Electronics',u:'920',r:'₹27.6L',k:'mid'},{n:'Premium Coffee',c:'Food',u:'3,420',r:'₹10.3L',k:'low'}],
+    'electronics':[{n:'Laptop Pro X',c:'Electronics',u:'1,240',r:'₹49.6L',k:'top'},{n:'Smartphone Y2',c:'Electronics',u:'920',r:'₹27.6L',k:'top'},{n:'Tablet Z',c:'Electronics',u:'680',r:'₹13.6L',k:'mid'},{n:'Earbuds Pro',c:'Electronics',u:'1,420',r:'₹7.1L',k:'mid'}],
+    'clothing':   [{n:'Winter Jacket',c:'Clothing',u:'2,180',r:'₹21.8L',k:'top'},{n:'Running Shoes',c:'Clothing',u:'1,640',r:'₹16.4L',k:'top'},{n:'Casual Shirt',c:'Clothing',u:'3,200',r:'₹9.6L',k:'mid'},{n:'Denim Jeans',c:'Clothing',u:'1,820',r:'₹14.6L',k:'mid'}],
+    'furniture':  [{n:'Office Chair',c:'Furniture',u:'840',r:'₹16.8L',k:'top'},{n:'Study Desk',c:'Furniture',u:'620',r:'₹12.4L',k:'top'},{n:'Bookshelf',c:'Furniture',u:'480',r:'₹4.8L',k:'mid'},{n:'Sofa Set',c:'Furniture',u:'280',r:'₹8.4L',k:'mid'}],
+    'food':       [{n:'Premium Coffee',c:'Food',u:'3,420',r:'₹10.3L',k:'top'},{n:'Green Tea Pack',c:'Food',u:'4,200',r:'₹8.4L',k:'top'},{n:'Protein Bar',c:'Food',u:'2,800',r:'₹5.6L',k:'mid'},{n:'Almond Butter',c:'Food',u:'1,600',r:'₹4.8L',k:'low'}],
+    'north':      [{n:'Laptop Pro X',c:'Electronics',u:'520',r:'₹20.8L',k:'top'},{n:'Winter Jacket',c:'Clothing',u:'940',r:'₹9.4L',k:'top'},{n:'Woolen Coat',c:'Clothing',u:'820',r:'₹12.3L',k:'mid'},{n:'Office Chair',c:'Furniture',u:'360',r:'₹7.2L',k:'mid'}],
+    'south':      [{n:'Laptop Pro X',c:'Electronics',u:'440',r:'₹17.6L',k:'top'},{n:'Smartphone Y2',c:'Electronics',u:'380',r:'₹11.4L',k:'top'},{n:'Cotton Shirt',c:'Clothing',u:'1,240',r:'₹3.7L',k:'mid'},{n:'Study Desk',c:'Furniture',u:'260',r:'₹5.2L',k:'low'}],
+    'east':       [{n:'Premium Coffee',c:'Food',u:'1,640',r:'₹4.9L',k:'top'},{n:'Casual Shirt',c:'Clothing',u:'1,480',r:'₹4.4L',k:'top'},{n:'Smartphone Y2',c:'Electronics',u:'280',r:'₹8.4L',k:'mid'},{n:'Bookshelf',c:'Furniture',u:'220',r:'₹2.2L',k:'low'}],
+    'west':       [{n:'Laptop Pro X',c:'Electronics',u:'480',r:'₹19.2L',k:'top'},{n:'Tablet Z',c:'Electronics',u:'320',r:'₹6.4L',k:'top'},{n:'Running Shoes',c:'Clothing',u:'760',r:'₹7.6L',k:'mid'},{n:'Sofa Set',c:'Furniture',u:'140',r:'₹4.2L',k:'low'}],
+  },
+};
+
+const COLORS = ['rgba(0,212,255,0.8)','rgba(255,77,109,0.8)','rgba(255,209,102,0.8)','rgba(0,255,157,0.8)','rgba(180,100,255,0.8)'];
+const TCOLORS = ['var(--accent2)','var(--accent)','var(--yellow)','var(--red)'];
+const OPT = {responsive:true,maintainAspectRatio:false};
+const SCALE = {x:{ticks:{color:'#6b7a8d',font:{family:'Space Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#6b7a8d',font:{family:'Space Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'}}};
+const LEG = {labels:{color:'#6b7a8d',font:{family:'Space Mono',size:10}}};
+
+const cTrend  = new Chart('cTrend',  {type:'line', data:{labels:[],datasets:[]}, options:{...OPT,plugins:{legend:LEG},scales:SCALE}});
+const cCat    = new Chart('cCat',    {type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:COLORS,borderWidth:0}]},options:{...OPT,cutout:'62%',plugins:{legend:LEG}}});
+const cRegion = new Chart('cRegion', {type:'bar',  data:{labels:[],datasets:[]}, options:{...OPT,plugins:{legend:{display:false}},scales:SCALE}});
+
+function update() {
+  const region = document.getElementById('f_region').value;
+  const cat    = document.getElementById('f_cat').value;
+  const year   = document.getElementById('f_year').value;
+  const ymul   = DATA.yearMul[year];
+
+  // Determine primary key for KPI (cat wins over region)
+  const kpiKey = (cat !== 'all' ? cat : region) + '-2024';
+  const kd = DATA.kpi[kpiKey] || DATA.kpi['all-2024'];
+
+  // ── 1. KPIs (scaled by year) ──
+  document.getElementById('v1').textContent = kd.rev;
+  document.getElementById('v2').textContent = kd.units;
+  document.getElementById('v3').textContent = kd.aov;
+  document.getElementById('v4').textContent = kd.ret;
+  const updn = v => v >= 0 ? `<span class="up">▲ ${Math.abs(v).toFixed(1)}%</span>` : `<span class="dn">▼ ${Math.abs(v).toFixed(1)}%</span>`;
+  document.getElementById('s1').innerHTML = updn(kd.rg) + ' vs last year';
+  document.getElementById('s2').innerHTML = updn(kd.ug) + ' vs last year';
+  document.getElementById('s3').innerHTML = updn(kd.ag) + ' vs last year';
+  document.getElementById('s4').innerHTML = (kd.dr <= 0 ? `<span class="up">▼ ${Math.abs(kd.dr).toFixed(1)}%</span> improved` : `<span class="dn">▲ ${Math.abs(kd.dr).toFixed(1)}%</span> worsened`);
+
+  // ── 2. Trend chart ──
+  const tKey = cat !== 'all' ? cat : (region !== 'all' ? region : 'all');
+  const tsrc = DATA.trend[tKey] || DATA.trend.all;
+  const cur  = tsrc[year]  || tsrc['2024'];
+  const prev = tsrc[String(+year-1)] || tsrc['2023'];
+  const scaledCur  = cur.map(v => Math.round(v * ymul / DATA.yearMul['2024']));
+  const scaledPrev = prev.map(v => Math.round(v * ymul / DATA.yearMul['2024'] * 0.845));
+  cTrend.data.labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  cTrend.data.datasets = [
+    {label:year,       data:scaledCur,  borderColor:'rgba(0,212,255,0.9)', backgroundColor:'rgba(0,212,255,0.08)',tension:0.4,fill:true, pointRadius:4,pointBackgroundColor:'rgba(0,212,255,1)'},
+    {label:+year-1+'', data:scaledPrev, borderColor:'rgba(107,122,141,0.5)',backgroundColor:'transparent',          tension:0.4,fill:false,pointRadius:3,borderDash:[4,4]},
+  ];
+  cTrend.update();
+
+  // ── 3. Category donut ──
+  const csrc = DATA.cat[tKey] || DATA.cat.all;
+  cCat.data.labels = csrc.l;
+  cCat.data.datasets[0].data = csrc.d;
+  cCat.update();
+
+  // ── 4. Region bar ──
+  const rKey = cat !== 'all' ? cat : (region !== 'all' ? region : 'all');
+  const rsrc = DATA.region[rKey] || DATA.region.all;
+  cRegion.data.labels = rsrc.l;
+  cRegion.data.datasets = [{
+    data: rsrc.d.map(v => Math.round(v * ymul)),
+    backgroundColor: COLORS.slice(0, rsrc.l.length),
+    borderRadius: 4
+  }];
+  cRegion.update();
+
+  // ── 5. Target tracker ──
+  const targets = DATA.targets[tKey] || DATA.targets.all;
+  document.getElementById('targets').innerHTML = targets.map((t, i) => {
+    const as = Math.round(t.a * ymul), ts = Math.round(t.t * ymul);
+    const pct = Math.min(100, Math.round((as / ts) * 100));
+    return `<div class="tr-row">
+      <div class="tr-head"><span class="tr-lbl">${t.q} Revenue</span><span class="tr-val" style="color:${TCOLORS[i]}">₹${as}L / ₹${ts}L</span></div>
+      <div class="pb"><div class="pv" style="width:${pct}%;background:${TCOLORS[i]};"></div></div>
+    </div>`;
+  }).join('');
+
+  // ── 6. Products table ──
+  const pKey = cat !== 'all' ? cat : (region !== 'all' ? region : 'all');
+  const prods = DATA.products[pKey] || DATA.products.all;
+  document.getElementById('tbl').innerHTML = prods.map(p =>
+    `<tr><td>${p.n}</td><td>${p.c}</td><td>${p.u}</td><td>${p.r}</td>
+     <td><span class="badge ${p.k}">${p.k.toUpperCase()}</span></td></tr>`
+  ).join('');
+}
+
+['f_region','f_cat','f_year'].forEach(id => document.getElementById(id).addEventListener('change', update));
+update();
+</script>
+</body>
+</html>

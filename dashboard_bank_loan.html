@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Loan System Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c10;--bg2:#0d1117;--card:#111720;--accent:#00d4ff;--accent2:#00ff9d;--red:#ff4d6d;--yellow:#ffd166;--text:#e8edf2;--muted:#6b7a8d;--border:rgba(0,212,255,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:1.2rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+.back-btn{font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:2px;color:var(--muted);text-decoration:none;}
+.back-btn:hover{color:var(--accent);}
+.header-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--accent);}
+.header-sub{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:2px;text-align:right;}
+main{padding:2rem;}
+.filters{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;align-items:center;background:var(--card);padding:1rem 1.5rem;border-radius:10px;border:1px solid var(--border);}
+.filter-label{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:2px;}
+select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:0.5rem 1rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:0.7rem;cursor:pointer;outline:none;transition:border-color 0.2s;}
+select:hover,select:focus{border-color:var(--accent);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2rem;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.blue::before{background:var(--accent);} .kpi.green::before{background:var(--accent2);}
+.kpi.red::before{background:var(--red);}     .kpi.yellow::before{background:var(--yellow);}
+.kpi-label{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:0.5rem;}
+.kpi-value{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;line-height:1;margin-bottom:0.3rem;}
+.kpi.blue .kpi-value{color:var(--accent);} .kpi.green .kpi-value{color:var(--accent2);}
+.kpi.red .kpi-value{color:var(--red);}     .kpi.yellow .kpi-value{color:var(--yellow);}
+.kpi-sub{font-size:0.78rem;color:var(--muted);}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:1rem;}
+.chart-wrap{position:relative;height:260px;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0.8rem 1rem;border-bottom:1px solid var(--border);text-align:left;}
+td{padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;}
+tr:hover td{background:rgba(0,212,255,0.04);}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:'Space Mono',monospace;font-size:0.6rem;}
+.badge.approved{background:rgba(0,255,157,0.15);color:var(--accent2);}
+.badge.rejected{background:rgba(255,77,109,0.15);color:var(--red);}
+.badge.pending{background:rgba(255,209,102,0.15);color:var(--yellow);}
+</style>
+</head>
+<body>
+<header>
+  <a href="https://kamala1205.github.io" class="back-btn">← Back to Portfolio</a>
+  <div class="header-title">🏦 BANK LOAN ANALYSIS</div>
+  <div class="header-sub">KAMALAKANTA BEHERA · DATA ANALYST</div>
+</header>
+<main>
+  <div class="filters">
+    <span class="filter-label">Filter by:</span>
+    <select id="f_type"><option value="all">All Loan Types</option><option value="home">Home Loan</option><option value="personal">Personal Loan</option><option value="auto">Auto Loan</option><option value="business">Business Loan</option></select>
+    <select id="f_credit"><option value="all">All Credit Scores</option><option value="excellent">Excellent (750+)</option><option value="good">Good (650–749)</option><option value="fair">Fair (550–649)</option><option value="poor">Poor (&lt;550)</option></select>
+    <select id="f_branch"><option value="all">All Branches</option><option value="bengaluru">Bengaluru</option><option value="mumbai">Mumbai</option><option value="delhi">Delhi</option><option value="hyderabad">Hyderabad</option></select>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-label">Total Applications</div><div class="kpi-value" id="v1">8,432</div><div class="kpi-sub">Loan applications</div></div>
+    <div class="kpi green"><div class="kpi-label">Approval Rate</div><div class="kpi-value" id="v2">62.3%</div><div class="kpi-sub">Applications approved</div></div>
+    <div class="kpi red"><div class="kpi-label">Default Rate</div><div class="kpi-value" id="v3">8.7%</div><div class="kpi-sub">Of approved loans</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Avg Loan Amount</div><div class="kpi-value" id="v4">₹4.2L</div><div class="kpi-sub">Per application</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">APPROVAL VS REJECTION</div><div class="chart-wrap"><canvas id="cBar"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">CREDIT SCORE DISTRIBUTION</div><div class="chart-wrap"><canvas id="cDonut"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">MONTHLY DISBURSEMENT (₹ Lakhs)</div><div class="chart-wrap"><canvas id="cMonthly"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">DEFAULT RISK BY INCOME</div><div class="chart-wrap"><canvas id="cRisk"></canvas></div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">RECENT APPLICATIONS</div>
+    <table><thead><tr><th>ID</th><th>Type</th><th>Amount</th><th>Credit Score</th><th>Income</th><th>Status</th></tr></thead>
+    <tbody id="tbl"></tbody></table>
+  </div>
+</main>
+
+<script>
+// ─── DATASET ─────────────────────────────────────────────────────────────────
+const KPI = {
+  // [apps, approvalRate, defaultRate, avgLoan]
+  'all-all-all':           [8432, 62.3, 8.7,  '₹4.2L'],
+  'home-all-all':          [2140, 71.8, 4.2,  '₹38.5L'],
+  'personal-all-all':      [3210, 47.2, 14.1, '₹2.8L'],
+  'auto-all-all':          [1620, 64.9, 6.8,  '₹7.4L'],
+  'business-all-all':      [1462, 58.1, 9.3,  '₹18.2L'],
+  'all-excellent-all':     [2380, 89.4, 2.1,  '₹8.6L'],
+  'all-good-all':          [3200, 72.1, 5.8,  '₹5.4L'],
+  'all-fair-all':          [2020, 44.6, 12.4, '₹3.1L'],
+  'all-poor-all':          [832,  22.8, 24.6, '₹1.8L'],
+  'all-all-bengaluru':     [2362, 64.1, 8.2,  '₹4.6L'],
+  'all-all-mumbai':        [2024, 61.8, 9.1,  '₹4.4L'],
+  'all-all-delhi':         [2192, 63.2, 8.5,  '₹4.1L'],
+  'all-all-hyderabad':     [1854, 59.4, 9.4,  '₹3.8L'],
+  'home-excellent-all':    [720,  94.2, 1.2,  '₹52L'],
+  'home-good-all':         [880,  78.4, 3.1,  '₹42L'],
+  'home-fair-all':         [380,  52.1, 7.4,  '₹28L'],
+  'personal-poor-all':     [640,  18.4, 32.1, '₹1.4L'],
+  'auto-excellent-all':    [480,  88.2, 2.4,  '₹9.8L'],
+  'business-good-all':     [520,  64.8, 7.2,  '₹22L'],
+};
+
+function getKPI(type, credit, branch) {
+  const key = `${type}-${credit}-${branch}`;
+  if (KPI[key]) return KPI[key];
+  // fallback: combine individual filters
+  const t = KPI[`${type}-all-all`] || KPI['all-all-all'];
+  const c = KPI[`all-${credit}-all`] || KPI['all-all-all'];
+  const b = KPI[`all-all-${branch}`] || KPI['all-all-all'];
+  const base = KPI['all-all-all'];
+  return [
+    Math.round(t[0] * (c[0]/base[0]) * (b[0]/base[0])),
+    parseFloat(Math.min(99, (t[1] * c[1]/base[1])).toFixed(1)),
+    parseFloat((t[2] * c[2]/base[2]).toFixed(1)),
+    t[3]
+  ];
+}
+
+// Bar: approval vs rejection per category
+const BAR = {
+  'all':      { labels:['Home','Personal','Auto','Business','Education'], apr:[72,48,65,58,70], rej:[28,52,35,42,30] },
+  'home':     { labels:['Bengaluru','Mumbai','Delhi','Hyderabad'],         apr:[74,70,72,68],   rej:[26,30,28,32] },
+  'personal': { labels:['Bengaluru','Mumbai','Delhi','Hyderabad'],         apr:[50,45,48,46],   rej:[50,55,52,54] },
+  'auto':     { labels:['Bengaluru','Mumbai','Delhi','Hyderabad'],         apr:[68,62,66,60],   rej:[32,38,34,40] },
+  'business': { labels:['Bengaluru','Mumbai','Delhi','Hyderabad'],         apr:[60,55,58,54],   rej:[40,45,42,46] },
+};
+const BAR_CREDIT_MUL = { all:1, excellent:1.30, good:1.10, fair:0.76, poor:0.42 };
+
+// Donut: credit score distribution per loan type + branch
+const DONUT = {
+  'all':       [28,38,24,10],
+  'home':      [36,42,18,4],
+  'personal':  [18,32,34,16],
+  'auto':      [30,40,22,8],
+  'business':  [34,38,20,8],
+  'bengaluru': [32,40,20,8],
+  'mumbai':    [25,36,28,11],
+  'delhi':     [30,38,22,10],
+  'hyderabad': [22,40,26,12],
+};
+const DONUT_LABELS = ['Excellent 750+','Good 650–749','Fair 550–649','Poor <550'];
+
+// Monthly disbursement
+const MONTHLY_BASE = {
+  'all':      [420,380,510,460,490,540,580,560,520,490,430,610],
+  'home':     [180,160,220,200,210,240,260,250,230,210,185,270],
+  'personal': [95,88,115,105,112,122,130,126,118,112,98,140],
+  'auto':     [82,74,100,92,96,108,116,112,104,96,84,120],
+  'business': [63,58,75,63,72,70,74,72,68,72,63,80],
+};
+const BRANCH_MUL = { all:1, bengaluru:0.28, mumbai:0.24, delhi:0.26, hyderabad:0.22 };
+
+// Risk by income per credit tier
+const RISK = {
+  'all':       [22,16,11,7,4,2],
+  'excellent': [5,3,2,1,0.5,0.2],
+  'good':      [12,9,6,4,2,1],
+  'fair':      [28,22,16,10,6,3],
+  'poor':      [45,38,28,18,11,6],
+};
+const RISK_LABELS = ['<2L','2–4L','4–6L','6–10L','10–15L','15L+'];
+
+// Table rows
+const ROWS = {
+  'all': [
+    {id:'#LN-4821',type:'Home',    amt:'₹45L', score:780, income:'₹12L/yr', status:'approved'},
+    {id:'#LN-4820',type:'Personal',amt:'₹3.5L',score:620, income:'₹5.4L/yr',status:'rejected'},
+    {id:'#LN-4819',type:'Auto',    amt:'₹8L',  score:710, income:'₹8.2L/yr',status:'approved'},
+    {id:'#LN-4818',type:'Business',amt:'₹25L', score:695, income:'₹18L/yr', status:'pending'},
+    {id:'#LN-4817',type:'Personal',amt:'₹2L',  score:580, income:'₹3.8L/yr',status:'rejected'},
+    {id:'#LN-4816',type:'Home',    amt:'₹62L', score:810, income:'₹22L/yr', status:'approved'},
+  ],
+  'home':     [{id:'#LN-4816',type:'Home',amt:'₹62L',score:810,income:'₹22L/yr',status:'approved'},{id:'#LN-4821',type:'Home',amt:'₹45L',score:780,income:'₹12L/yr',status:'approved'},{id:'#LN-4812',type:'Home',amt:'₹38L',score:640,income:'₹9L/yr',status:'pending'},{id:'#LN-4808',type:'Home',amt:'₹28L',score:590,income:'₹7L/yr',status:'rejected'}],
+  'personal': [{id:'#LN-4820',type:'Personal',amt:'₹3.5L',score:620,income:'₹5.4L/yr',status:'rejected'},{id:'#LN-4817',type:'Personal',amt:'₹2L',score:580,income:'₹3.8L/yr',status:'rejected'},{id:'#LN-4815',type:'Personal',amt:'₹4L',score:720,income:'₹7.2L/yr',status:'approved'},{id:'#LN-4809',type:'Personal',amt:'₹1.5L',score:540,income:'₹2.8L/yr',status:'rejected'}],
+  'auto':     [{id:'#LN-4819',type:'Auto',amt:'₹8L',score:710,income:'₹8.2L/yr',status:'approved'},{id:'#LN-4814',type:'Auto',amt:'₹6L',score:760,income:'₹10L/yr',status:'approved'},{id:'#LN-4810',type:'Auto',amt:'₹12L',score:680,income:'₹14L/yr',status:'approved'},{id:'#LN-4805',type:'Auto',amt:'₹5L',score:590,income:'₹6L/yr',status:'pending'}],
+  'business': [{id:'#LN-4818',type:'Business',amt:'₹25L',score:695,income:'₹18L/yr',status:'pending'},{id:'#LN-4813',type:'Business',amt:'₹40L',score:780,income:'₹30L/yr',status:'approved'},{id:'#LN-4807',type:'Business',amt:'₹18L',score:620,income:'₹12L/yr',status:'rejected'},{id:'#LN-4802',type:'Business',amt:'₹55L',score:820,income:'₹45L/yr',status:'approved'}],
+};
+const CREDIT_RANGES = { excellent:[750,900], good:[650,749], fair:[550,649], poor:[0,549] };
+
+// ─── CHARTS ──────────────────────────────────────────────────────────────────
+const COLORS = ['rgba(0,212,255,0.8)','rgba(255,77,109,0.8)','rgba(255,209,102,0.8)','rgba(0,255,157,0.8)','rgba(180,100,255,0.8)'];
+const OPT = {responsive:true,maintainAspectRatio:false};
+const SCALE = {x:{ticks:{color:'#6b7a8d',font:{family:'Space Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#6b7a8d',font:{family:'Space Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'}}};
+const LEG = {labels:{color:'#6b7a8d',font:{family:'Space Mono',size:10}}};
+
+const cBar     = new Chart('cBar',     {type:'bar',      data:{labels:[],datasets:[]},                                             options:{...OPT,plugins:{legend:LEG},scales:SCALE}});
+const cDonut   = new Chart('cDonut',   {type:'doughnut', data:{labels:DONUT_LABELS,datasets:[{data:[],backgroundColor:COLORS,borderWidth:0}]}, options:{...OPT,cutout:'62%',plugins:{legend:LEG}}});
+const cMonthly = new Chart('cMonthly', {type:'bar',       data:{labels:[],datasets:[]},                                             options:{...OPT,plugins:{legend:{display:false}},scales:SCALE}});
+const cRisk    = new Chart('cRisk',    {type:'line',       data:{labels:RISK_LABELS,datasets:[]},                                   options:{...OPT,plugins:{legend:{display:false}},scales:SCALE}});
+
+function update() {
+  const type   = document.getElementById('f_type').value;
+  const credit = document.getElementById('f_credit').value;
+  const branch = document.getElementById('f_branch').value;
+
+  // ── 1. KPIs ──
+  const [apps, apr, def, avg] = getKPI(type, credit, branch);
+  document.getElementById('v1').textContent = apps.toLocaleString();
+  document.getElementById('v2').textContent = apr.toFixed(1) + '%';
+  document.getElementById('v3').textContent = def.toFixed(1) + '%';
+  document.getElementById('v4').textContent = avg;
+
+  // ── 2. Bar chart ──
+  const bd  = BAR[type] || BAR.all;
+  const cmul = BAR_CREDIT_MUL[credit] || 1;
+  const aprData = bd.apr.map(v => Math.min(100, Math.round(v * cmul)));
+  const rejData = bd.rej.map(v => Math.max(0,  Math.round(v / cmul)));
+  cBar.data.labels = bd.labels;
+  cBar.data.datasets = [
+    {label:'Approved (%)', data:aprData, backgroundColor:'rgba(0,255,157,0.7)', borderRadius:4},
+    {label:'Rejected (%)', data:rejData, backgroundColor:'rgba(255,77,109,0.7)', borderRadius:4},
+  ];
+  cBar.update();
+
+  // ── 3. Donut chart ──
+  const dkey = type !== 'all' ? type : (branch !== 'all' ? branch : 'all');
+  cDonut.data.datasets[0].data = DONUT[dkey] || DONUT.all;
+  cDonut.update();
+
+  // ── 4. Monthly disbursement ──
+  const mbase = MONTHLY_BASE[type] || MONTHLY_BASE.all;
+  const bmul  = branch !== 'all' ? BRANCH_MUL[branch] : 1;
+  const mdata = mbase.map(v => Math.round(v * bmul));
+  cMonthly.data.labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  cMonthly.data.datasets = [{label:'₹L', data:mdata, backgroundColor:'rgba(0,212,255,0.6)', borderRadius:4}];
+  cMonthly.update();
+
+  // ── 5. Risk chart ──
+  const rdata = RISK[credit] || RISK.all;
+  cRisk.data.datasets = [{
+    data:rdata, label:'Default %',
+    borderColor:'rgba(255,77,109,0.9)', backgroundColor:'rgba(255,77,109,0.1)',
+    tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'rgba(255,77,109,0.9)'
+  }];
+  cRisk.update();
+
+  // ── 6. Table ──
+  let rows = ROWS[type] || ROWS.all;
+  if (credit !== 'all') {
+    const [lo, hi] = CREDIT_RANGES[credit];
+    rows = rows.filter(r => r.score >= lo && r.score <= hi);
+    if (!rows.length) rows = ROWS.all.filter(r => r.score >= lo && r.score <= hi);
+  }
+  document.getElementById('tbl').innerHTML = rows.length
+    ? rows.map(r => `<tr><td>${r.id}</td><td>${r.type}</td><td>${r.amt}</td><td>${r.score}</td><td>${r.income}</td>
+        <td><span class="badge ${r.status}">${r.status.toUpperCase()}</span></td></tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--muted);font-family:'Space Mono',monospace;font-size:0.75rem">No records for selected filters</td></tr>`;
+}
+
+['f_type','f_credit','f_branch'].forEach(id => document.getElementById(id).addEventListener('change', update));
+update();
+</script>
+</body>
+</html>

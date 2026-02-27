@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airline Performance & Delay Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c10;--bg2:#0d1117;--card:#111720;--accent:#00d4ff;--accent2:#00ff9d;--red:#ff4d6d;--yellow:#ffd166;--text:#e8edf2;--muted:#6b7a8d;--border:rgba(0,212,255,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:1.2rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+.back-btn{font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:2px;color:var(--muted);text-decoration:none;}
+.back-btn:hover{color:var(--accent);}
+.header-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--accent);}
+.header-sub{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:2px;text-align:right;}
+main{padding:2rem;}
+.filters{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;align-items:center;background:var(--card);padding:1rem 1.5rem;border-radius:10px;border:1px solid var(--border);}
+.filter-label{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:2px;}
+select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:0.5rem 1rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:0.7rem;cursor:pointer;outline:none;transition:border-color 0.2s;}
+select:hover,select:focus{border-color:var(--accent);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2rem;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.blue::before{background:var(--accent);}
+.kpi.green::before{background:var(--accent2);}
+.kpi.red::before{background:var(--red);}
+.kpi.yellow::before{background:var(--yellow);}
+.kpi-label{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:0.5rem;}
+.kpi-value{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;line-height:1;margin-bottom:0.3rem;}
+.kpi.blue .kpi-value{color:var(--accent);}
+.kpi.green .kpi-value{color:var(--accent2);}
+.kpi.red .kpi-value{color:var(--red);}
+.kpi.yellow .kpi-value{color:var(--yellow);}
+.kpi-sub{font-size:0.78rem;color:var(--muted);}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:1rem;}
+.chart-wrap{position:relative;height:260px;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0.8rem 1rem;border-bottom:1px solid var(--border);text-align:left;}
+td{padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;}
+tr:hover td{background:rgba(0,212,255,0.04);}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:'Space Mono',monospace;font-size:0.6rem;}
+.badge.high{background:rgba(255,77,109,0.15);color:var(--red);}
+.badge.mid{background:rgba(255,209,102,0.15);color:var(--yellow);}
+.badge.low{background:rgba(0,255,157,0.15);color:var(--accent2);}
+</style>
+</head>
+<body>
+<header>
+  <a href="https://kamala1205.github.io" class="back-btn">← Back to Portfolio</a>
+  <div class="header-title">✈ AIRLINE DELAY DASHBOARD</div>
+  <div class="header-sub">KAMALAKANTA BEHERA · DATA ANALYST</div>
+</header>
+<main>
+  <div class="filters">
+    <span class="filter-label">Filter by:</span>
+    <select id="f_airline"><option value="all">All Airlines</option><option value="IndiGo">IndiGo</option><option value="Air India">Air India</option><option value="SpiceJet">SpiceJet</option><option value="Vistara">Vistara</option><option value="GoFirst">GoFirst</option></select>
+    <select id="f_season"><option value="all">All Seasons</option><option value="Q1">Q1 (Jan–Mar)</option><option value="Q2">Q2 (Apr–Jun)</option><option value="Q3">Q3 (Jul–Sep)</option><option value="Q4">Q4 (Oct–Dec)</option></select>
+    <select id="f_route"><option value="all">All Routes</option><option value="DEL-BOM">DEL → BOM</option><option value="BOM-BLR">BOM → BLR</option><option value="DEL-BLR">DEL → BLR</option><option value="MAA-DEL">MAA → DEL</option><option value="BLR-HYD">BLR → HYD</option><option value="BOM-DEL">BOM → DEL</option></select>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-label">Total Flights</div><div class="kpi-value" id="v1">12,847</div><div class="kpi-sub">Analyzed across routes</div></div>
+    <div class="kpi red"><div class="kpi-label">Avg Delay</div><div class="kpi-value" id="v2">34 MIN</div><div class="kpi-sub">Per delayed flight</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Delay Rate</div><div class="kpi-value" id="v3">28.4%</div><div class="kpi-sub">Flights delayed</div></div>
+    <div class="kpi green"><div class="kpi-label">On-Time Rate</div><div class="kpi-value" id="v4">71.6%</div><div class="kpi-sub">On schedule</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">AVG DELAY BY AIRLINE (MIN)</div><div class="chart-wrap"><canvas id="cBar"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">DELAY CAUSES BREAKDOWN</div><div class="chart-wrap"><canvas id="cDonut"></canvas></div></div>
+    <div class="chart-card full"><div class="chart-title">MONTHLY DELAY TREND (MIN)</div><div class="chart-wrap"><canvas id="cLine"></canvas></div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">ROUTE DETAILS</div>
+    <table><thead><tr><th>Route</th><th>Airline</th><th>Avg Delay</th><th>Delay Rate</th><th>Risk</th></tr></thead>
+    <tbody id="tbl"></tbody></table>
+  </div>
+</main>
+
+<script>
+// ─── COMPLETE DATASET ───────────────────────────────────────────────────────
+// Base values (season=all, airline=all, route=all)
+const BASE = {
+  all:         { flights:12847, delay:34, rate:28.4 },
+  IndiGo:      { flights:3210,  delay:38, rate:34.1 },
+  'Air India': { flights:2980,  delay:44, rate:39.2 },
+  SpiceJet:    { flights:2640,  delay:29, rate:24.3 },
+  Vistara:     { flights:2180,  delay:22, rate:18.1 },
+  GoFirst:     { flights:1837,  delay:18, rate:12.5 },
+  'DEL-BOM':   { flights:1842,  delay:42, rate:34.0 },
+  'BOM-BLR':   { flights:1620,  delay:38, rate:31.0 },
+  'DEL-BLR':   { flights:1280,  delay:28, rate:24.0 },
+  'MAA-DEL':   { flights:1040,  delay:19, rate:18.0 },
+  'BLR-HYD':   { flights:820,   delay:12, rate:11.0 },
+  'BOM-DEL':   { flights:740,   delay:9,  rate:8.0  },
+};
+
+// Season multipliers applied to delay and rate
+const SMUL = { all:1.00, Q1:0.82, Q2:1.05, Q3:1.28, Q4:0.88 };
+const SIDX = { all:[0,1,2,3,4,5,6,7,8,9,10,11], Q1:[0,1,2], Q2:[3,4,5], Q3:[6,7,8], Q4:[9,10,11] };
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Bar chart data: delays per airline per season
+const BAR_DATA = {
+  all: { IndiGo:38, 'Air India':44, SpiceJet:29, Vistara:22, GoFirst:18 },
+  Q1:  { IndiGo:31, 'Air India':36, SpiceJet:24, Vistara:18, GoFirst:15 },
+  Q2:  { IndiGo:40, 'Air India':46, SpiceJet:30, Vistara:23, GoFirst:19 },
+  Q3:  { IndiGo:49, 'Air India':57, SpiceJet:38, Vistara:29, GoFirst:24 },
+  Q4:  { IndiGo:34, 'Air India':39, SpiceJet:26, Vistara:20, GoFirst:16 },
+};
+// When a specific airline is selected, show delays by its routes instead
+const BAR_ROUTE = {
+  IndiGo:      { labels:['DEL→BOM','BLR→HYD','BOM→MAA','DEL→HYD'], all:[42,12,28,33], Q1:[34,10,23,27], Q2:[44,13,29,35], Q3:[54,16,37,43], Q4:[37,11,25,30] },
+  'Air India': { labels:['BOM→BLR','DEL→LHR','BOM→JFK','DEL→DXB'], all:[44,52,49,38], Q1:[36,43,40,31], Q2:[46,55,51,40], Q3:[57,67,63,49], Q4:[39,46,43,34] },
+  SpiceJet:    { labels:['DEL→BLR','BOM→DEL','MAA→BOM','HYD→DEL'], all:[28,22,18,14], Q1:[23,18,15,11], Q2:[29,23,19,15], Q3:[36,28,23,18], Q4:[25,19,16,12] },
+  Vistara:     { labels:['MAA→DEL','BLR→DEL','BOM→BLR','HYD→BOM'], all:[19,16,14,11], Q1:[16,13,11,9],  Q2:[20,17,15,12], Q3:[24,20,18,14], Q4:[17,14,12,10] },
+  GoFirst:     { labels:['BOM→DEL','BLR→BOM','DEL→MAA','MAA→BLR'], all:[18,14,12,9],  Q1:[15,11,10,7],  Q2:[19,15,13,9],  Q3:[23,18,15,12], Q4:[16,12,11,8] },
+};
+
+// Donut: delay causes per airline
+const DONUT = {
+  all:         { l:['Weather','Late A/C','Carrier','NAS','Security'], d:[32,28,22,14,4] },
+  IndiGo:      { l:['Late A/C','Weather','Carrier','NAS','Security'], d:[36,26,20,12,6] },
+  'Air India': { l:['Carrier','Weather','Late A/C','NAS','Security'], d:[40,26,18,10,6] },
+  SpiceJet:    { l:['Weather','NAS','Carrier','Late A/C','Security'], d:[34,24,20,16,6] },
+  Vistara:     { l:['Weather','NAS','Late A/C','Carrier','Security'], d:[36,22,20,16,6] },
+  GoFirst:     { l:['Weather','NAS','Late A/C','Carrier','Security'], d:[40,24,18,12,6] },
+};
+// When route selected, causes shift
+const DONUT_ROUTE = {
+  'DEL-BOM': { l:['Late A/C','Carrier','Weather','NAS','Security'], d:[38,28,20,10,4] },
+  'BOM-BLR': { l:['Carrier','Weather','Late A/C','NAS','Security'], d:[42,24,18,10,6] },
+  'DEL-BLR': { l:['Weather','NAS','Carrier','Late A/C','Security'], d:[36,22,20,16,6] },
+  'MAA-DEL': { l:['Weather','NAS','Late A/C','Carrier','Security'], d:[38,24,18,14,6] },
+  'BLR-HYD': { l:['Weather','NAS','Late A/C','Carrier','Security'], d:[40,24,18,12,6] },
+  'BOM-DEL': { l:['Weather','NAS','Carrier','Late A/C','Security'], d:[42,22,18,12,6] },
+};
+
+// Line: monthly trend per airline
+const LINE = {
+  IndiGo:      [32,28,35,40,38,44,50,48,42,36,30,28],
+  'Air India': [40,44,38,42,48,52,55,50,46,40,38,42],
+  SpiceJet:    [25,22,28,30,26,32,36,34,28,24,20,22],
+  Vistara:     [18,16,20,22,19,24,26,25,21,18,15,17],
+  GoFirst:     [14,12,16,18,15,19,22,20,17,14,11,13],
+};
+const LINE_ROUTE = {
+  'DEL-BOM': [38,34,40,46,44,50,58,55,48,42,36,34],
+  'BOM-BLR': [34,30,36,42,40,46,52,50,44,38,32,30],
+  'DEL-BLR': [24,20,26,30,28,34,38,36,30,26,22,20],
+  'MAA-DEL': [16,14,18,22,20,24,28,26,22,18,15,14],
+  'BLR-HYD': [10,8,12,14,12,16,18,17,14,12,9,8],
+  'BOM-DEL': [7,6,9,10,9,11,14,12,10,8,7,6],
+};
+const LINE_COLORS = {
+  IndiGo:      ['rgba(0,212,255,0.9)',  'rgba(0,212,255,0.07)'],
+  'Air India': ['rgba(255,77,109,0.9)', 'rgba(255,77,109,0.07)'],
+  SpiceJet:    ['rgba(255,209,102,0.9)','rgba(255,209,102,0.07)'],
+  Vistara:     ['rgba(0,255,157,0.9)',  'rgba(0,255,157,0.07)'],
+  GoFirst:     ['rgba(180,100,255,0.9)','rgba(180,100,255,0.07)'],
+  route:       ['rgba(0,212,255,0.9)',  'rgba(0,212,255,0.07)'],
+};
+
+// Route table rows
+const ROWS_ALL = [
+  {route:'DEL → BOM', key:'DEL-BOM', airline:'IndiGo',    delay:42, rate:34, risk:'high'},
+  {route:'BOM → BLR', key:'BOM-BLR', airline:'Air India', delay:38, rate:31, risk:'high'},
+  {route:'DEL → BLR', key:'DEL-BLR', airline:'SpiceJet',  delay:28, rate:24, risk:'mid'},
+  {route:'MAA → DEL', key:'MAA-DEL', airline:'Vistara',   delay:19, rate:18, risk:'mid'},
+  {route:'BLR → HYD', key:'BLR-HYD', airline:'IndiGo',   delay:12, rate:11, risk:'low'},
+  {route:'BOM → DEL', key:'BOM-DEL', airline:'GoFirst',   delay:9,  rate:8,  risk:'low'},
+];
+const AIRLINE_ROWS = {
+  IndiGo:      ROWS_ALL.filter(r => r.airline === 'IndiGo'),
+  'Air India': ROWS_ALL.filter(r => r.airline === 'Air India'),
+  SpiceJet:    ROWS_ALL.filter(r => r.airline === 'SpiceJet'),
+  Vistara:     ROWS_ALL.filter(r => r.airline === 'Vistara'),
+  GoFirst:     ROWS_ALL.filter(r => r.airline === 'GoFirst'),
+};
+
+// ─── CHART SETUP ─────────────────────────────────────────────────────────────
+const COLORS = ['rgba(0,212,255,0.8)','rgba(255,77,109,0.8)','rgba(255,209,102,0.8)','rgba(0,255,157,0.8)','rgba(180,100,255,0.8)'];
+const SCALE = {
+  x:{ticks:{color:'#6b7a8d',font:{family:'Space Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'}},
+  y:{ticks:{color:'#6b7a8d',font:{family:'Space Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'}}
+};
+const LEG = {labels:{color:'#6b7a8d',font:{family:'Space Mono',size:10}}};
+const OPT = {responsive:true,maintainAspectRatio:false};
+
+const cBar   = new Chart('cBar',   {type:'bar',      data:{labels:[],datasets:[{label:'Avg Delay (min)',data:[],backgroundColor:COLORS,borderRadius:5}]}, options:{...OPT,plugins:{legend:{display:false}},scales:SCALE}});
+const cDonut = new Chart('cDonut', {type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:COLORS,borderWidth:0}]},                          options:{...OPT,cutout:'65%',plugins:{legend:LEG}}});
+const cLine  = new Chart('cLine',  {type:'line',      data:{labels:[],datasets:[]},                                                                         options:{...OPT,plugins:{legend:LEG},scales:SCALE}});
+
+// ─── MAIN UPDATE FUNCTION ─────────────────────────────────────────────────────
+function update() {
+  const airline = document.getElementById('f_airline').value;
+  const season  = document.getElementById('f_season').value;
+  const route   = document.getElementById('f_route').value;
+  const mul     = SMUL[season];
+  const idxs    = SIDX[season];
+
+  // ── 1. KPIs ──
+  let src;
+  if (route !== 'all')        src = BASE[route];
+  else if (airline !== 'all') src = BASE[airline];
+  else                        src = BASE.all;
+  const flights = src.flights;
+  const delay   = Math.round(src.delay * mul);
+  const rate    = Math.min(99, parseFloat((src.rate * mul).toFixed(1)));
+  const ontime  = (100 - rate).toFixed(1);
+  document.getElementById('v1').textContent = flights.toLocaleString();
+  document.getElementById('v2').textContent = delay + ' MIN';
+  document.getElementById('v3').textContent = rate.toFixed(1) + '%';
+  document.getElementById('v4').textContent = ontime + '%';
+
+  // ── 2. Bar chart ──
+  if (airline !== 'all' && BAR_ROUTE[airline]) {
+    const br = BAR_ROUTE[airline];
+    const vals = (br[season] || br.all).map(v => Math.round(v));
+    cBar.data.labels = br.labels;
+    cBar.data.datasets[0].data = vals;
+    cBar.data.datasets[0].backgroundColor = COLORS.slice(0, br.labels.length);
+  } else {
+    const bd = BAR_DATA[season] || BAR_DATA.all;
+    const entries = Object.entries(bd);
+    cBar.data.labels = entries.map(e => e[0]);
+    cBar.data.datasets[0].data = entries.map(e => Math.round(e[1]));
+    cBar.data.datasets[0].backgroundColor = COLORS.slice(0, entries.length);
+  }
+  cBar.update();
+
+  // ── 3. Donut chart ──
+  const dsrc = (route !== 'all' && DONUT_ROUTE[route]) ? DONUT_ROUTE[route]
+             : (DONUT[airline] || DONUT.all);
+  cDonut.data.labels = dsrc.l;
+  cDonut.data.datasets[0].data = dsrc.d;
+  cDonut.update();
+
+  // ── 4. Line chart ──
+  const months = idxs.map(i => MONTHS[i]);
+  let datasets;
+  if (route !== 'all') {
+    const raw = LINE_ROUTE[route] || LINE_ROUTE['DEL-BOM'];
+    const vals = idxs.map(i => Math.round(raw[i] * mul));
+    datasets = [{ label: route.replace('-',' → '), data:vals,
+      borderColor:'rgba(0,212,255,0.9)', backgroundColor:'rgba(0,212,255,0.08)',
+      tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'rgba(0,212,255,1)' }];
+  } else {
+    const airlines = airline === 'all' ? Object.keys(LINE) : [airline];
+    datasets = airlines.map(name => {
+      const raw = LINE[name];
+      const vals = idxs.map(i => Math.round(raw[i] * mul));
+      const [bc, bg] = LINE_COLORS[name] || LINE_COLORS.route;
+      return { label:name, data:vals, borderColor:bc, backgroundColor:bg,
+               tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:bc };
+    });
+  }
+  cLine.data.labels = months;
+  cLine.data.datasets = datasets;
+  cLine.update();
+
+  // ── 5. Table ──
+  let rows = airline !== 'all' ? (AIRLINE_ROWS[airline] || []) : [...ROWS_ALL];
+  if (route !== 'all') rows = rows.length ? rows.filter(r => r.key === route) : ROWS_ALL.filter(r => r.key === route);
+  rows = rows.map(r => ({...r, delay: Math.round(r.delay * mul), rate: parseFloat((r.rate * mul).toFixed(0))}));
+  document.getElementById('tbl').innerHTML = rows.length
+    ? rows.map(r => `<tr><td>${r.route}</td><td>${r.airline}</td><td>${r.delay} min</td><td>${r.rate}%</td>
+        <td><span class="badge ${r.risk}">${r.risk.toUpperCase()}</span></td></tr>`).join('')
+    : `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--muted);font-family:'Space Mono',monospace;font-size:0.75rem">No data for selected combination</td></tr>`;
+}
+
+document.getElementById('f_airline').addEventListener('change', update);
+document.getElementById('f_season').addEventListener('change', update);
+document.getElementById('f_route').addEventListener('change', update);
+update();
+</script>
+</body>
+</html>
